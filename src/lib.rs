@@ -5,14 +5,28 @@
 // Look at chipInit() at the bottom, and open Chrome devtools console to see the debugPrint().
 
 use std::ffi::{c_void, CString};
-use wokwi_chip_ll::{
-    debugPrint, pinInit, pinWatch, pinWrite, I2CConfig, I2CDevId, PinId, BOTH, HIGH, INPUT, LOW,
-    OUTPUT,
-};
+use wokwi_chip_ll::{debugPrint, i2cInit, pinInit, I2CConfig, I2CDevId, INPUT};
 
 struct Chip {
-    internal_address: I2CDevId,
+    id: I2CDevId,
+    internal_address: Register,
+    state: State,
 }
+
+enum State {
+    ExpectingConnect,
+    ExpectingReadByte1,
+    ExpectingReadByte2,
+    ExpectingWriteByte1,
+    ExpectingWriteByte2,
+}
+
+enum Register {
+    WhoAmI = 0x75,
+    Uninitialized = 0xFF,
+}
+
+// const ADDRESS: i32 = 0x68;
 
 static mut CHIP_VEC: Vec<Chip> = Vec::new();
 
@@ -31,48 +45,69 @@ pub unsafe extern "C" fn chipInit() {
         disconnect: on_i2c_disconnect as *const c_void,
     };
 
-    // let chip = Chip {
-    //     internal_address: i2cInit(),
-    // };
-    // CHIP_VEC.push(chip);
+    let chip = Chip {
+        id: i2cInit(&i2c_config),
+        internal_address: Register::Uninitialized,
+        state: State::ExpectingConnect,
+    };
+
+    CHIP_VEC.push(chip);
     // let chip = CHIP_VEC.last().unwrap();
-
-    // let watch_config = WatchConfig {
-    //     user_data: (CHIP_VEC.len() - 1) as *const c_void,
-    //     edge: BOTH,
-    //     pin_change: on_pin_change as *const c_void,
-    // };
-
-    // pinWatch(chip.pin_in, &watch_config);
 }
 
 pub unsafe fn on_i2c_connect(user_ctx: *const c_void, address: u32, read: bool) -> bool {
-    let chip = &CHIP_VEC[user_ctx as usize];
-    // if value == HIGH {
-    //     pinWrite(chip.pin_out, LOW);
-    // } else {
-    //     pinWrite(chip.pin_out, HIGH);
-    // }
+    let chip: &mut Chip = &mut CHIP_VEC[user_ctx as usize];
+    if read {
+        chip.state = State::ExpectingReadByte1;
+    } else {
+        chip.state = State::ExpectingWriteByte1;
+    }
     true
 }
 
-pub unsafe fn on_i2c_read(user_ctx: *const c_void, data: u8) -> u8 {
-    let chip = &CHIP_VEC[user_ctx as usize];
-    // if value == HIGH {
-    //     pinWrite(chip.pin_out, LOW);
-    // } else {
-    //     pinWrite(chip.pin_out, HIGH);
-    // }
-    8
+pub unsafe fn on_i2c_read(user_ctx: *const c_void) -> u8 {
+    let chip: &mut Chip = &mut CHIP_VEC[user_ctx as usize];
+
+    match chip.state {
+        State::ExpectingReadByte1 => match chip.internal_address {
+            Register::WhoAmI => {
+                chip.state = State::ExpectingReadByte2;
+                return 0x67;
+            }
+            _ => {
+                chip.state = State::ExpectingConnect;
+            }
+        },
+        State::ExpectingReadByte2 => match chip.internal_address {
+            Register::WhoAmI => {
+                chip.state = State::ExpectingConnect;
+            }
+            _ => {
+                chip.state = State::ExpectingConnect;
+            }
+        },
+        _ => {
+            chip.state = State::ExpectingConnect;
+        }
+    }
+    0x0
 }
 
 pub unsafe fn on_i2c_write(user_ctx: *const c_void, data: u8) -> bool {
-    let chip = &CHIP_VEC[user_ctx as usize];
-    // if value == HIGH {
-    //     pinWrite(chip.pin_out, LOW);
-    // } else {
-    //     pinWrite(chip.pin_out, HIGH);
-    // }
+    let chip: &mut Chip = &mut CHIP_VEC[user_ctx as usize];
+
+    match chip.state {
+        State::ExpectingWriteByte1 => {
+            chip.internal_address = match data {
+                0x75 => Register::WhoAmI,
+                _ => Register::Uninitialized,
+            };
+            chip.state = State::ExpectingWriteByte2;
+        }
+        _ => {
+            chip.state = State::ExpectingConnect;
+        }
+    }
     true
 }
 
