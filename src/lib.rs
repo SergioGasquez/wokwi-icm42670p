@@ -8,7 +8,7 @@ use std::ffi::{c_void, CString};
 use wokwi_chip_ll::{debugPrint, i2cInit, pinInit, I2CConfig, I2CDevId, INPUT};
 
 struct Chip {
-    id: I2CDevId,
+    _id: I2CDevId,
     internal_address: Register,
     state: State,
 }
@@ -35,7 +35,7 @@ pub unsafe extern "C" fn chipInit() {
     debugPrint(CString::new("Hello Rust!").unwrap().into_raw());
 
     let i2c_config = I2CConfig {
-        user_data: 0 as *const c_void,
+        user_data: (CHIP_VEC.len() - 1) as *const c_void,
         address: 0x42,
         scl: pinInit(CString::new("SCL").unwrap().into_raw(), INPUT),
         sda: pinInit(CString::new("SDA").unwrap().into_raw(), INPUT),
@@ -46,7 +46,7 @@ pub unsafe extern "C" fn chipInit() {
     };
 
     let chip = Chip {
-        id: i2cInit(&i2c_config),
+        _id: i2cInit(&i2c_config),
         internal_address: Register::Uninitialized,
         state: State::ExpectingConnect,
     };
@@ -111,6 +111,6 @@ pub unsafe fn on_i2c_write(user_ctx: *const c_void, data: u8) -> bool {
     true
 }
 
-pub unsafe fn on_i2c_disconnect(user_ctx: *const c_void, data: u8) {
+pub unsafe fn on_i2c_disconnect(_user_ctx: *const c_void, _data: u8) {
     // Do nothing
 }
