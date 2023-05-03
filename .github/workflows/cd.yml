@@ -37,9 +37,10 @@ jobs:
           ZIP_VERSION: ${{ github.ref_name }}
       - name: Create a zip archive
         run: cd chip && zip -9 ../chip.zip chip.*
-      - name: Upload release
-        uses: ncipollo/release-action@v1
+      - name: Upload compressed artifact
+        uses: svenstaro/upload-release-action@v2
         with:
-          artifacts: chip.zip
-          token: ${{ secrets.GITHUB_TOKEN }}
-          generateReleaseNotes: true
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: chip.zip
+          tag: ${{ github.ref }}
+
