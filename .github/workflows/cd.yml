@@ -1,19 +1,16 @@
-name: Continuous Integration
+name: Continuous Deployment
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
+  release:
+    types: [created]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  release:
+    name: Release
     runs-on: ubuntu-latest
-    name: Build chip
     steps:
       - name: Setup | Rust
         uses: dtolnay/rust-toolchain@v1
@@ -34,9 +31,15 @@ jobs:
           mkdir -p dist
           cp target/wasm32-unknown-unknown/release/imc42670p.wasm dist/chip.wasm
           cp wokwi-chip.json dist/chip.json
-      - name: "Upload Artifacts"
-        uses: actions/upload-artifact@v3
+      - name: Create chip.version.txt file
+        run: echo "$ZIP_VERSION" > chip/chip.version.txt
+        env:
+          ZIP_VERSION: ${{ github.ref_name }}
+      - name: Create a zip archive
+        run: cd dist && zip -9 ../chip.zip chip.*
+      - name: Upload release
+        uses: ncipollo/release-action@v1
         with:
-          name: chip
-          path: dist/*
-
+          artifacts: chip.zip
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generateReleaseNotes: true
