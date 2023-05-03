@@ -56,6 +56,8 @@ pub unsafe extern "C" fn chipInit() {
 }
 
 pub unsafe fn on_i2c_connect(user_ctx: *const c_void, address: u32, read: bool) -> bool {
+    let msg: String = format!("on_i2c_connect: add: {}, read: {}", address, read);
+    debugPrint(CString::new(msg).unwrap().into_raw());
     let chip: &mut Chip = &mut CHIP_VEC[user_ctx as usize];
     if read {
         chip.state = State::ExpectingReadByte1;
@@ -66,15 +68,18 @@ pub unsafe fn on_i2c_connect(user_ctx: *const c_void, address: u32, read: bool) 
 }
 
 pub unsafe fn on_i2c_read(user_ctx: *const c_void) -> u8 {
+    debugPrint(CString::new("on_i2c_read").unwrap().into_raw());
     let chip: &mut Chip = &mut CHIP_VEC[user_ctx as usize];
 
     match chip.state {
         State::ExpectingReadByte1 => match chip.internal_address {
             Register::WhoAmI => {
+                debugPrint(CString::new("WhoAmI").unwrap().into_raw());
                 chip.state = State::ExpectingReadByte2;
                 return 0x67;
             }
             _ => {
+                debugPrint(CString::new("Other").unwrap().into_raw());
                 chip.state = State::ExpectingConnect;
             }
         },
@@ -94,6 +99,9 @@ pub unsafe fn on_i2c_read(user_ctx: *const c_void) -> u8 {
 }
 
 pub unsafe fn on_i2c_write(user_ctx: *const c_void, data: u8) -> bool {
+    let msg = format!("on_i2c_write: {}", data);
+    debugPrint(CString::new(msg).unwrap().into_raw());
+
     let chip: &mut Chip = &mut CHIP_VEC[user_ctx as usize];
 
     match chip.state {
