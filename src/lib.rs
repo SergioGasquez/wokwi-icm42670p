@@ -26,7 +26,7 @@ enum Register {
     Uninitialized = 0xFF,
 }
 
-// const ADDRESS: i32 = 0x68;
+const ADDRESS: u32 = 0x68;
 
 static mut CHIP_VEC: Vec<Chip> = Vec::new();
 
@@ -36,7 +36,7 @@ pub unsafe extern "C" fn chipInit() {
 
     let i2c_config = I2CConfig {
         user_data: (CHIP_VEC.len() - 1) as *const c_void,
-        address: 0x42,
+        address: ADDRESS,
         scl: pinInit(CString::new("SCL").unwrap().into_raw(), INPUT),
         sda: pinInit(CString::new("SDA").unwrap().into_raw(), INPUT),
         connect: on_i2c_connect as *const c_void,
