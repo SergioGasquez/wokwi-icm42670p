@@ -34,8 +34,8 @@ static mut CHIP_VEC: Vec<Chip> = Vec::new();
 pub unsafe extern "C" fn chipInit() {
     debugPrint(CString::new("Hello Rust!").unwrap().into_raw());
 
-    let i2c_config = I2CConfig {
-        user_data: (CHIP_VEC.len() - 1) as *const c_void,
+    let i2c_config: I2CConfig = I2CConfig {
+        user_data: std::ptr::null::<c_void>(),
         address: ADDRESS,
         scl: pinInit(CString::new("SCL").unwrap().into_raw(), INPUT),
         sda: pinInit(CString::new("SDA").unwrap().into_raw(), INPUT),
@@ -50,9 +50,8 @@ pub unsafe extern "C" fn chipInit() {
         internal_address: Register::Uninitialized,
         state: State::ExpectingConnect,
     };
-
     CHIP_VEC.push(chip);
-    // let chip = CHIP_VEC.last().unwrap();
+    debugPrint(CString::new("Chip initialized!").unwrap().into_raw());
 }
 
 pub unsafe fn on_i2c_connect(user_ctx: *const c_void, address: u32, read: bool) -> bool {
