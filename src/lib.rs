@@ -31,7 +31,7 @@ impl Register {
 
 const ADDRESS: u32 = 0x68;
 
-const PRODUCT_ID_HI: u8 = 0x67;
+const PRODUCT_ID_HI: u8 = 0x60;
 const PRODUCT_ID_LO: u8 = 0x00;
 
 static mut CHIP_VEC: Vec<Chip> = Vec::new();
