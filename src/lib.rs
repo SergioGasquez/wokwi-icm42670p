@@ -38,7 +38,7 @@ static mut CHIP_VEC: Vec<Chip> = Vec::new();
 
 #[no_mangle]
 pub unsafe extern "C" fn chipInit() {
-    debugPrint(CString::new("Initializing IMC42670P").unwrap().into_raw());
+    debugPrint(CString::new("Initializing ICM42670P").unwrap().into_raw());
     let chip = Chip {
         internal_address: Register::Uninitialized,
         state: State::ExpectingConnect,

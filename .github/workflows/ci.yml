@@ -32,7 +32,7 @@ jobs:
       - name: Build | Copy dist files
         run: |
           mkdir -p dist
-          cp target/wasm32-unknown-unknown/release/imc42670p.wasm dist/chip.wasm
+          cp target/wasm32-unknown-unknown/release/icm42670p.wasm dist/chip.wasm
           cp wokwi-chip.json dist/chip.json
       - name: "Upload Artifacts"
         uses: actions/upload-artifact@v3

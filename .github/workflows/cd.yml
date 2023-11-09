@@ -29,7 +29,7 @@ jobs:
       - name: Build | Copy dist files
         run: |
           mkdir -p chip
-          cp target/wasm32-unknown-unknown/release/imc42670p.wasm chip/chip.wasm
+          cp target/wasm32-unknown-unknown/release/icm42670p.wasm chip/chip.wasm
           cp wokwi-chip.json chip/chip.json
       - name: Create chip.version.txt file
         run: echo "$ZIP_VERSION" > chip/chip.version.txt
